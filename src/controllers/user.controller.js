@@ -20,7 +20,7 @@ const generateAccessAndRefreshTokens = async (userId) => {
   } catch (error) {
     throw new ApiError(
       500,
-      "Something went wrong while generating Aceess and Reffresh tokens "
+      "Something went wrong while generating Aceess and Refresh tokens "
     );
   }
 };
@@ -109,7 +109,7 @@ const registerUser = asyncHandler(async (req, res) => {
     "http://localhost:8000/api/v1/users/login",
     data
   );
-  console.log(resp);
+  // console.log(resp);
   return res
     .status(201)
     .json(new ApiResponse(200, createdUser, "User registerd Successfully"));
@@ -124,8 +124,8 @@ const loginUser = asyncHandler(async (req, res) => {
   // 6. send secure cookies
 
   const { email, username, password } = req.body;
-  console.log(req);
-  console.log(username);
+  // console.log(req);
+  // console.log(username);
   if (!(username || email)) {
     throw new ApiError(400, "username or email is required");
   }
@@ -141,7 +141,7 @@ const loginUser = asyncHandler(async (req, res) => {
   const isPasswordValid = await user.isPasswordCorrect(password);
 
   if (!isPasswordValid) {
-    throw new ApiError(404, "Invalid User Credentials");
+    throw new ApiError(401, "Invalid User Credentials");
   }
 
   const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
@@ -164,7 +164,6 @@ const loginUser = asyncHandler(async (req, res) => {
     .json(
       new ApiResponse(
         200,
-
         {
           user: loginedInUser,
           accessToken,
@@ -195,12 +194,55 @@ const logOutUser = asyncHandler(async (req, res) => {
     .status(200)
     .clearCookie("accessToken", options)
     .clearCookie("refreshToken", options)
-    .json(
-      new ApiResponse(
-        200,
-        {},
-        "User Logged Out Successfully"
-      )
-    );
+    .json(new ApiResponse(200, {}, "User Logged Out Successfully"));
 });
-export { registerUser, loginUser, logOutUser };
+
+const refreshAccessToken = asyncHandler(async (req, res) => {
+  const incomingRefreshToken =
+    req.cookies.refreshToken || req.body.refreshToken;
+
+  if (!incomingRefreshToken) {
+    throw new ApiError(401, "unauthorized request");
+  }
+
+  try {
+    const decodedToken = jwt.verify(
+      incomingRefreshToken,
+      process.env.REFRESH_TOKEN_SECRET
+    );
+
+    const user = await User.findById(decodedToken?._id);
+
+    if (!user) {
+      throw new ApiError(401, "Invalid Refresh Token");
+    }
+
+    if (incomingRefreshToken !== user?.refreshToken) {
+      throw new ApiError(401, "Refresh Token is Exipred or used");
+    }
+
+    const options = {
+      httpOnly: true,
+      secure: true,
+    };
+
+    const { accessToken, newRefreshToken } =
+      await generateAccessAndRefreshTokens(user._id);
+
+    return res
+      .status(200)
+      .cookie("accesToken", accessToken, options)
+      .cookie("refreshToken", newRefreshToken, options)
+      .json(
+        new ApiResponse(
+          200,
+          { accessToken, refreshToken: newRefreshToken },
+          "Access Token Refreshed"
+        )
+      );
+  } catch (error) {
+    throw new ApiError(401, error?.message || "Invalid refresh Token");
+  }
+});
+
+export { registerUser, loginUser, logOutUser, refreshAccessToken };
