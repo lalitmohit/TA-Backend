@@ -3,6 +3,9 @@ import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import jwt from "jsonwebtoken";
+import mongoose from "mongoose";
+import axios from "axios";
 
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
@@ -23,6 +26,7 @@ const generateAccessAndRefreshTokens = async (userId) => {
 };
 
 const registerUser = asyncHandler(async (req, res) => {
+  // LOGIC
   // 1. Getting User Details from Frontend
   // 2. Validation - Not Empty / ........
   // 3. Checking if User Exists ? from username, email
@@ -33,11 +37,13 @@ const registerUser = asyncHandler(async (req, res) => {
   // 8. check for user creation
   // 9. return user response
 
-  const { fullName, email, username, password } = req.body;
-  console.log("email", email);
+  const { fullName, email, username, password, phone } = req.body;
+  console.log("email", password);
 
   if (
-    [fullName, email, username, password].some((field) => field?.trim() === "")
+    [fullName, email, username, password, phone].some(
+      (field) => field?.trim() === ""
+    )
   ) {
     throw new ApiError(400, "All Firlds are Compulsory");
   }
@@ -83,6 +89,7 @@ const registerUser = asyncHandler(async (req, res) => {
     email: email.toLowerCase(),
     password,
     username: username.toLowerCase(),
+    phone: phone.toLowerCase(),
   });
 
   const createdUser = await User.findById(user._id).select(
@@ -93,6 +100,16 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Some Error while registering a user");
   }
 
+  const data = {
+    username: username,
+    password: password,
+  };
+  console.log(data);
+  const resp = await axios.post(
+    "http://localhost:8000/api/v1/users/login",
+    data
+  );
+  console.log(resp);
   return res
     .status(201)
     .json(new ApiResponse(200, createdUser, "User registerd Successfully"));
@@ -107,8 +124,9 @@ const loginUser = asyncHandler(async (req, res) => {
   // 6. send secure cookies
 
   const { email, username, password } = req.body;
-  console.log(email);
-  if (!email && !username) {
+  console.log(req);
+  console.log(username);
+  if (!(username || email)) {
     throw new ApiError(400, "username or email is required");
   }
 
@@ -161,8 +179,8 @@ const logOutUser = asyncHandler(async (req, res) => {
   await User.findByIdAndUpdate(
     req.user._id,
     {
-      $set: {
-        refreshToken: undefined,
+      $unset: {
+        refreshToken: 1, // this removes the field from document
       },
     },
     {
@@ -176,11 +194,10 @@ const logOutUser = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .clearCookie("accessToken", options)
-    .clearCookie("refreshToken", refreshToken, options)
+    .clearCookie("refreshToken", options)
     .json(
       new ApiResponse(
         200,
-
         {},
         "User Logged Out Successfully"
       )
