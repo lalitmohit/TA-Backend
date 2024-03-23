@@ -36,13 +36,13 @@ const registerUser = asyncHandler(async (req, res) => {
   // 7. Remove password and refresh token field from response
   // 8. check for user creation
   // 9. return user response
-
+  console.log(req.body);
   const { firstName, lastName, idNumber, email, password, phone } = req.body;
   console.log("password", password);
 
   if (
     [firstName, lastName, idNumber, email, password, phone].some(
-      (field) => field?.trim() === ""
+      (field) => field ?.trim() === ""
     )
   ) {
     throw new ApiError(400, "All Fields are Compulsory");
@@ -77,9 +77,9 @@ const registerUser = asyncHandler(async (req, res) => {
     firstName: firstName.toLowerCase(),
     lastName: lastName.toLowerCase(),
     idNumber: idNumber,
-    password,
+    password: password,
     email: email.toLowerCase(),
-    phone: phone.toLowerCase(),
+    phone: phone,
   });
 
   const createdUser = await User.findById(user._id).select(
@@ -90,10 +90,13 @@ const registerUser = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Some Error while registering a user");
   }
 
-  const resp = await axios.post(
-    "http://localhost:8000/api/v1/users/login",
-    data
-  );
+  const data = {
+    idNumber: idNumber,
+    password: password
+  }
+
+  const resp = await axios.post("http://localhost:8000/api/v1/users/login", data);
+  console.log(resp);
   return res
     .status(201)
     .json(new ApiResponse(200, createdUser, "User registerd Successfully"));
@@ -106,15 +109,15 @@ const loginUser = asyncHandler(async (req, res) => {
   // 4. password check
   // 5. access an refresh token
   // 6. send secure cookies
+  console.log(req.body)
+  const { idNumber, password } = req.body;
 
-  const { email, idNumber, password } = req.body;
-
-  if (!(idNumber || email)) {
-    throw new ApiError(400, "username or email is required");
+  if (!(idNumber)) {
+    throw new ApiError(400, "idNumber is required");
   }
 
   const user = await User.findOne({
-    $or: [{ idNumber }, { email }],
+    $or: [{ idNumber }],
   });
 
   if (!user) {
@@ -194,13 +197,13 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       process.env.REFRESH_TOKEN_SECRET
     );
 
-    const user = await User.findById(decodedToken?._id);
+    const user = await User.findById(decodedToken ?._id);
 
     if (!user) {
       throw new ApiError(401, "Invalid Refresh Token");
     }
 
-    if (incomingRefreshToken !== user?.refreshToken) {
+    if (incomingRefreshToken !== user ?.refreshToken) {
       throw new ApiError(401, "Refresh Token is Exipred or used");
     }
 
@@ -224,14 +227,14 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
         )
       );
   } catch (error) {
-    throw new ApiError(401, error?.message || "Invalid refresh Token");
+    throw new ApiError(401, error ?.message || "Invalid refresh Token");
   }
 });
 
 const changeCurrentPassword = asyncHandler(async (req, res) => {
   const { oldPassword, newPassword } = req.body;
 
-  const user = await User.findById(req.user?._id);
+  const user = await User.findById(req.user ?._id);
   const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
 
   if (!isPasswordCorrect) {
@@ -253,7 +256,7 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 });
 
 const updateUserAvatar = asyncHandler(async (req, res) => {
-  const avatarLocalPath = req.file?.path;
+  const avatarLocalPath = req.file ?.path;
 
   if (!avatarLocalPath) {
     throw new ApiError(400, "Avata file Path Missing");
@@ -266,7 +269,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
   }
 
   const user = await User.findByIdAndUpdate(
-    req.user?._id,
+    req.user ?._id,
     {
       $set: {
         avatar: avatar.url,

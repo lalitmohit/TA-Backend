@@ -46,6 +46,14 @@ const userSchema = new Schema(
     refreshToken: {
       type: String,
     },
+    isDeleted: {
+      type: Boolean,
+      default: false
+    },
+    deletedAt: {
+      type: Date,
+      default: null
+    },
   },
   {
     timestamps: true,
