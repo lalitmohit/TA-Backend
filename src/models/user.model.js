@@ -3,14 +3,30 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 
 const userSchema = new Schema(
-  { 
-    username: {
+  {
+    firstName: {
+      type: String,
+      required: true,
+      trim: true,
+      index: true,
+    },
+    lastName: {
+      type: String,
+      required: true,
+      trim: true,
+      index: true,
+    },
+    idNumber: {
       type: String,
       required: true,
       unique: true,
       lowercase: true,
       trim: true,
       index: true,
+    },
+    password: {
+      type: String,
+      required: [true, "Password is Required"],
     },
     email: {
       type: String,
@@ -19,43 +35,13 @@ const userSchema = new Schema(
       lowercase: true,
       trim: true,
     },
-    fullName: {
-      type: String,
-      required: true,
-      trim: true,
-      index: true,
-    },
     phone: {
       type: String,
       required: true,
-      trim: true
-    },
-    phone2: {
-      type: String,
-      trim: true
+      trim: true,
     },
     avatar: {
-      type: String,
-      required: true,
-    },
-    coverImage: {
-      type: String,
-    },
-    leaveHistory: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "Leave",
-      },
-    ],
-    course: [
-      {
-        type: Schema.Types.ObjectId,
-        ref: "Course",
-      },
-    ],
-    password: {
-      type: String,
-      required: [true, "Password is Required"],
+      type: String
     },
     refreshToken: {
       type: String,
@@ -83,8 +69,8 @@ userSchema.methods.generateAccessToken = function () {
     {
       _id: this._id,
       email: this.email,
-      username: this.username,
-      fullName: this.fullName,
+      idNumber: this.idNumber,
+      firstName: this.firstName,
     },
     process.env.ACCESS_TOKEN_SECRET,
     {
