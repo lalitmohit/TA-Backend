@@ -2,7 +2,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
-import { ApiResponse } from "../utils/ApiResponse.js";
+import { ApiResponse, ApiFailureResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import axios from "axios";
@@ -26,80 +26,85 @@ const generateAccessAndRefreshTokens = async (userId) => {
 };
 
 const registerUser = asyncHandler(async (req, res) => {
-  // LOGIC
-  // 1. Getting User Details from Frontend
-  // 2. Validation - Not Empty / ........
-  // 3. Checking if User Exists ? from username, email
-  // 4. Checking for images, checking for avatar
-  // 5. upload them to cloudinary, avatar
-  // 6. Create user object - create entry in DB
-  // 7. Remove password and refresh token field from response
-  // 8. check for user creation
-  // 9. return user response
-  console.log(req.body);
-  const { firstName, lastName, idNumber, email, password, phone } = req.body;
-  console.log("password", password);
+  try {
+    // LOGIC
+    // 1. Getting User Details from Frontend
+    // 2. Validation - Not Empty / ........
+    // 3. Checking if User Exists ? from username, email
+    // 4. Checking for images, checking for avatar
+    // 5. upload them to cloudinary, avatar
+    // 6. Create user object - create entry in DB
+    // 7. Remove password and refresh token field from response
+    // 8. check for user creation
+    // 9. return user response
+    console.log(req.body);
+    const { firstName, lastName, idNumber, email, password, phone } = req.body;
+    console.log("password", password);
 
-  if (
-    [firstName, lastName, idNumber, email, password, phone].some(
-      (field) => field ?.trim() === ""
+    if (
+      [firstName, lastName, idNumber, email, password, phone].some(
+        (field) => field ?.trim() === ""
     )
-  ) {
-    throw new ApiError(400, "All Fields are Compulsory");
+    ) {
+      throw new ApiError(400, "All Fields are Compulsory");
+    }
+
+    if (phone.length > 10) {
+      throw new ApiError(400, "Enter Valid Phone Number");
+    }
+
+    const existedUser = await User.findOne({
+      $or: [{ email }, { idNumber }, { phone }],
+    });
+
+    if (existedUser) {
+      return res.status(409).send(new ApiFailureResponse(409, "User already exist"));
+    }
+
+    // const avatarLocalPath = req.files?.avatar[0]?.path;
+
+    // if (!avatarLocalPath) {
+    //   throw new ApiError(400, "Avatar file is required");
+    // }
+
+    // const avatar = await uploadOnCloudinary(avatarLocalPath);
+
+    // if (!avatar) {
+    //   throw new ApiError(400, "Avatar file is required");
+    // }
+
+    // avatar: avatar.url,
+    const registerUser = await User.create({
+      firstName: firstName.toLowerCase(),
+      lastName: lastName.toLowerCase(),
+      idNumber: idNumber,
+      password: password,
+      email: email.toLowerCase(),
+      phone: phone,
+    });
+
+    if (!registerUser) {
+      return res.status(400).send(new ApiFailureResponse(400, "User not registered succesfully, try again after sometimes"));
+    }
+
+    const data = {
+      idNumber: idNumber,
+      password: password
+    }
+
+    const resp = await axios.post("http://localhost:8000/api/v1/users/login", data);
+    console.log(resp);
+    return res
+      .status(201)
+      .json(new ApiResponse(200, "User Registered Successfully"));
+  } catch (error) {
+    return res
+      .status(500)
+      .json(new ApiError(
+        500,
+        "Internal Server Erorr"
+      ));
   }
-
-  if (phone.length > 10) {
-    throw new ApiError(400, "Enter Valid Phone Number");
-  }
-
-  const existedUser = await User.findOne({
-    $or: [{ email }, { idNumber }, { phone }],
-  });
-
-  if (existedUser) {
-    throw new ApiError(409, "User with given data already exist");
-  }
-
-  // const avatarLocalPath = req.files?.avatar[0]?.path;
-
-  // if (!avatarLocalPath) {
-  //   throw new ApiError(400, "Avatar file is required");
-  // }
-
-  // const avatar = await uploadOnCloudinary(avatarLocalPath);
-
-  // if (!avatar) {
-  //   throw new ApiError(400, "Avatar file is required");
-  // }
-
-  // avatar: avatar.url,
-  const user = await User.create({
-    firstName: firstName.toLowerCase(),
-    lastName: lastName.toLowerCase(),
-    idNumber: idNumber,
-    password: password,
-    email: email.toLowerCase(),
-    phone: phone,
-  });
-
-  const createdUser = await User.findById(user._id).select(
-    "-password -refreshToken"
-  );
-
-  if (!createdUser) {
-    throw new ApiError(500, "Some Error while registering a user");
-  }
-
-  const data = {
-    idNumber: idNumber,
-    password: password
-  }
-
-  const resp = await axios.post("http://localhost:8000/api/v1/users/login", data);
-  console.log(resp);
-  return res
-    .status(201)
-    .json(new ApiResponse(200, createdUser, "User registerd Successfully"));
 });
 
 const loginUser = asyncHandler(async (req, res) => {
@@ -121,14 +126,18 @@ const loginUser = asyncHandler(async (req, res) => {
   });
 
   if (!user) {
-    throw new ApiError(404, "User not exist");
+    return res.status(404).send(new ApiFailureResponse(404, "User not exist"));
   }
 
   const isPasswordValid = await user.isPasswordCorrect(password);
 
   if (!isPasswordValid) {
-    throw new ApiError(401, "Invalid User Credentials");
+    return res.status(401).send(new ApiFailureResponse(401, "Invalid Credentials"));
   }
+
+  // if (!isPasswordValid) {
+  //   throw new ApiError(401, "Invalid User Credentials");
+  // }
 
   const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
     user._id
@@ -285,6 +294,15 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, user, "Avatar Updated Successfully"));
 });
 
+const getUserFormStatus = asyncHandler(async (req, res) => {
+  const  idNumber = req.query.idNumber;
+  const userFormStatus = await User.findOne({ idNumber: idNumber, isDeleted: false }).select({ idNumber: 1, _id:0});
+  console.log(userFormStatus);
+  return res
+    .status(200)
+    .json(new ApiResponse(200, userFormStatus, "User form status sent successfully"));
+});
+
 export {
   registerUser,
   loginUser,
@@ -293,4 +311,5 @@ export {
   changeCurrentPassword,
   getCurrentUser,
   updateUserAvatar,
+  getUserFormStatus
 };

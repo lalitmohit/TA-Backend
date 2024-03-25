@@ -2,6 +2,14 @@ import mongoose, { Schema } from "mongoose";
 
 const userInfo = new Schema(
   {
+    idNumber: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+      index: true,
+    },
     designation: {
       type: String,
       required: true,
@@ -117,6 +125,10 @@ const userInfo = new Schema(
       type: Date,
       default: null
     },
+    isUserInfoSaved: {
+      type: Boolean,
+      default: false
+    }
   },
   {
     timestamps: true,
@@ -124,4 +136,4 @@ const userInfo = new Schema(
 );
 
 
-export const UserInfo = mongoose.model("User_info", userInfo);
+export const UserInfo = mongoose.model("Userinfo", userInfo);
