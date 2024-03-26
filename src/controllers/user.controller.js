@@ -296,7 +296,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 
 const getUserFormStatus = asyncHandler(async (req, res) => {
   const  idNumber = req.query.idNumber;
-  const userFormStatus = await User.findOne({ idNumber: idNumber, isDeleted: false }).select({ idNumber: 1, _id:0});
+  const userFormStatus = await User.findOne({ idNumber: idNumber, isDeleted: false }).select({ idNumber: 1, isUserInfoSaved: 1, _id:0});
   console.log(userFormStatus);
   return res
     .status(200)

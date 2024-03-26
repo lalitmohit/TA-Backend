@@ -124,10 +124,6 @@ const userInfo = new Schema(
     deletedAt: {
       type: Date,
       default: null
-    },
-    isUserInfoSaved: {
-      type: Boolean,
-      default: false
     }
   },
   {

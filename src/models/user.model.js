@@ -46,6 +46,10 @@ const userSchema = new Schema(
     refreshToken: {
       type: String,
     },
+    isUserInfoSaved: {
+      type: Boolean,
+      default: false
+    },
     isDeleted: {
       type: Boolean,
       default: false
