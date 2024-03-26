@@ -295,13 +295,22 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 });
 
 const getUserFormStatus = asyncHandler(async (req, res) => {
-  const  idNumber = req.query.idNumber;
-  const userFormStatus = await User.findOne({ idNumber: idNumber, isDeleted: false }).select({ idNumber: 1, isUserInfoSaved: 1, _id:0});
-  console.log(userFormStatus);
+  const idNumber = req.query.idNumber;
+  const userFormStatus = await User.findOne({ idNumber: idNumber, isDeleted: false }).select({ idNumber: 1, isUserInfoSaved: 1, _id: 0 });
   return res
     .status(200)
     .json(new ApiResponse(200, userFormStatus, "User form status sent successfully"));
 });
+
+const getUserInfo = asyncHandler(async (req, res) => {
+  const idNumber = req.query.idNumber;
+  const userInfoData = await User.findOne({ idNumber: idNumber, isDeleted: false })
+    .select({ firstName: 1, lastName: 1, email: 1, phone: 1, idNumber: 1, _id: 0 });
+  return res
+    .status(200)
+    .json(new ApiResponse(200, userInfoData, "User form status sent successfully"));
+});
+
 
 export {
   registerUser,
@@ -311,5 +320,6 @@ export {
   changeCurrentPassword,
   getCurrentUser,
   updateUserAvatar,
-  getUserFormStatus
+  getUserFormStatus,
+  getUserInfo,
 };

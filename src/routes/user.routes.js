@@ -4,7 +4,8 @@ import {
   loginUser,
   refreshAccessToken,
   registerUser,
-  getUserFormStatus
+  getUserFormStatus,
+  getUserInfo,
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -36,5 +37,6 @@ router.route("/auth/google").get(upload.none(), authGoogle);
 router.route("/auth/google/callback").get(upload.none(), authGoogleCallback);
 
 router.route("/form/status").get(upload.none(), getUserFormStatus);
+router.route("/info").get(upload.none(), getUserInfo);
 
 export default router;
