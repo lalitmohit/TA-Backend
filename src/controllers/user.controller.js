@@ -190,6 +190,9 @@ const IndustryInfo = asyncHandler(async (req, res) => {
     console.log(req.body);
     
     const user = await UserInfo.findOne({ idNumber: idNumber });
+    const userInf = await User.findOne({ idNumber: idNumber });
+
+    userInf.isUserInfoSaved = true;
 
     user.areaOfSpecilisation = areaOfSpecialisation;
     user.primaryProgrammingSkills = primaryProgrammingSkills;
@@ -202,13 +205,15 @@ const IndustryInfo = asyncHandler(async (req, res) => {
     user.patents = patents;
 
     await user.save({ validateBeforeSave: false });
+    await userInf.save({ validateBeforeSave: false });
 
     return res
       .status(201)
       .json(
         new ApiResponse(
           200,
-          { user: user },
+          { user: user ,
+            userInf: userInf},
           "User Industrial Info Saved Successfully"
         )
       );
