@@ -12,13 +12,11 @@ const userInfo = new Schema(
     },
     designation: {
       type: String,
-      required: true,
       lowercase: true,
       trim: true
     },
     department: {
       type: String,
-      required: true,
       lowercase: true,
       trim: true
     },
@@ -26,43 +24,37 @@ const userInfo = new Schema(
       {
         from: {
           type: Date,
-          required: true,
           trim: true
         },
         to: {
           type: Date,
-          required: true,
           trim: true
         },
         companyName: {
           type: String,
-          required: true,
           lowercase: true,
           trim: true
         },
         industry: {
           type: String,
-          required: true,
           lowercase: true,
           trim: true
         },
         designation: {
           type: String,
-          required: true,
           lowercase: true,
           trim: true
         }
       }
     ],
     profileSummary: {
-      type: Text,
+      type: String,
       lowercase: true,
       trim: true
     },
     areaOfSpecilisation: [
       {
         type: String,
-        required: true,
         lowercase: true,
         trim: true
       }
@@ -79,42 +71,36 @@ const userInfo = new Schema(
     }],
     primarySkills: [{
       type: String,
-      required: true,
       lowercase: true,
       trim: true
     }],
     secondarySkills: [{
       type: String,
-      required: true,
       lowercase: true,
       trim: true
     }],
     softwareTools: [{
       type: String,
-      required: true,
       lowercase: true,
       trim: true
     }],
     hardwareTools: [{
       type: String,
-      required: true,
       lowercase: true,
       trim: true
     }],
     publications: [{
       type: String,
-      required: true,
       lowercase: true,
       trim: true
     }],
     patents: [{
       type: String,
-      required: true,
       lowercase: true,
       trim: true
     }],
     collegeId: {
-      type: ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
     isDeleted: {

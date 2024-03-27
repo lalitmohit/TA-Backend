@@ -1,6 +1,7 @@
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { User } from "../models/user.model.js";
+import { UserInfo } from "../models/userInfo.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import { ApiResponse, ApiFailureResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
@@ -43,8 +44,8 @@ const registerUser = asyncHandler(async (req, res) => {
 
     if (
       [firstName, lastName, idNumber, email, password, phone].some(
-        (field) => field ?.trim() === ""
-    )
+        (field) => field?.trim() === ""
+      )
     ) {
       throw new ApiError(400, "All Fields are Compulsory");
     }
@@ -58,7 +59,9 @@ const registerUser = asyncHandler(async (req, res) => {
     });
 
     if (existedUser) {
-      return res.status(409).send(new ApiFailureResponse(409, "User already exist"));
+      return res
+        .status(409)
+        .send(new ApiFailureResponse(409, "User already exist"));
     }
 
     // const avatarLocalPath = req.files?.avatar[0]?.path;
@@ -84,26 +87,134 @@ const registerUser = asyncHandler(async (req, res) => {
     });
 
     if (!registerUser) {
-      return res.status(400).send(new ApiFailureResponse(400, "User not registered succesfully, try again after sometimes"));
+      return res
+        .status(400)
+        .send(
+          new ApiFailureResponse(
+            400,
+            "User not registered succesfully, try again after sometimes"
+          )
+        );
     }
 
     const data = {
       idNumber: idNumber,
-      password: password
+      password: password,
+    };
+
+    const resp = await axios.post(
+      "http://localhost:8000/api/v1/users/login",
+      data
+    );
+    console.log(resp);
+    return res.status(201).json(
+      new ApiResponse(
+        200,
+        {
+          user: registerUser,
+        },
+        "User Registered Successfully"
+      )
+    );
+  } catch (error) {
+    return res.status(500).json(new ApiError(500, "Internal Server Erorr"));
+  }
+});
+
+const professionalInfo = asyncHandler(async (req, res) => {
+  // LOGIC
+  // 1. Getting User Details from Frontend
+  // 2. Validation - Not Empty / ........
+  // 6. Create user object - create entry in DB
+  // 8. check for user creation
+  // 9. return user response
+  console.log(req.body);
+  try {
+    const { idNumber, designation, department, experience, profileSummary } =
+      req.body;
+
+    const userProfessionalInfo = await UserInfo.create({
+      idNumber: idNumber,
+      designation: designation,
+      department: department,
+      experience: experience,
+      profileSummary: profileSummary,
+    });
+
+    if (!userProfessionalInfo) {
+      return res
+        .status(400)
+        .send(
+          new ApiFailureResponse(
+            400,
+            "User Professional Info not saved succesfully, try again after sometimes"
+          )
+        );
     }
 
-    const resp = await axios.post("http://localhost:8000/api/v1/users/login", data);
-    console.log(resp);
+    return res.status(201).json(
+      new ApiResponse(
+        200,
+        {
+          user: userProfessionalInfo,
+        },
+        "User Professional Info Saved Successfully"
+      )
+    );
+  } catch (error) {
+    return res.send(new ApiError(500, "Internal Server Error"));
+  }
+});
+
+const IndustryInfo = asyncHandler(async (req, res) => {
+  // LOGIC
+  // 1. Getting User Details from Frontend
+  // 2. Validation - Not Empty / ........
+  // 6. Create user object - create entry in DB
+  // 8. check for user creation
+  // 9. return user response
+  try {
+    const {
+      idNumber,
+      areaOfSpecialisation,
+      primaryProgrammingSkills,
+      secondaryProgrammingSkills,
+      primarySkills,
+      secondarySkills,
+      softwareTools,
+      hardwareTools,
+      publications,
+      patents,
+    } = req.body;
+
+    console.log(req.body);
+    
+    const user = await UserInfo.findOne({ idNumber: idNumber });
+
+    user.areaOfSpecilisation = areaOfSpecialisation;
+    user.primaryProgrammingSkills = primaryProgrammingSkills;
+    user.secondaryProgrammingSkills = secondaryProgrammingSkills;
+    user.primarySkills = primarySkills;
+    user.secondarySkills = secondarySkills;
+    user.softwareTools = softwareTools;
+    user.hardwareTools = hardwareTools;
+    user.publications = publications;
+    user.patents = patents;
+
+    await user.save({ validateBeforeSave: false });
+
     return res
       .status(201)
-      .json(new ApiResponse(200, "User Registered Successfully"));
+      .json(
+        new ApiResponse(
+          200,
+          { user: user },
+          "User Industrial Info Saved Successfully"
+        )
+      );
   } catch (error) {
-    return res
-      .status(500)
-      .json(new ApiError(
-        500,
-        "Internal Server Erorr"
-      ));
+    console.error("Error in IndustryInfo:", error);
+    return res.send(new ApiError(500, "Internal Server Error"));
   }
 });
 
@@ -114,10 +225,10 @@ const loginUser = asyncHandler(async (req, res) => {
   // 4. password check
   // 5. access an refresh token
   // 6. send secure cookies
-  console.log(req.body)
+  console.log(req.body);
   const { idNumber, password } = req.body;
 
-  if (!(idNumber)) {
+  if (!idNumber) {
     throw new ApiError(400, "idNumber is required");
   }
 
@@ -132,7 +243,9 @@ const loginUser = asyncHandler(async (req, res) => {
   const isPasswordValid = await user.isPasswordCorrect(password);
 
   if (!isPasswordValid) {
-    return res.status(401).send(new ApiFailureResponse(401, "Invalid Credentials"));
+    return res
+      .status(401)
+      .send(new ApiFailureResponse(401, "Invalid Credentials"));
   }
 
   // if (!isPasswordValid) {
@@ -206,13 +319,13 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
       process.env.REFRESH_TOKEN_SECRET
     );
 
-    const user = await User.findById(decodedToken ?._id);
+    const user = await User.findById(decodedToken?._id);
 
     if (!user) {
       throw new ApiError(401, "Invalid Refresh Token");
     }
 
-    if (incomingRefreshToken !== user ?.refreshToken) {
+    if (incomingRefreshToken !== user?.refreshToken) {
       throw new ApiError(401, "Refresh Token is Exipred or used");
     }
 
@@ -236,14 +349,14 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
         )
       );
   } catch (error) {
-    throw new ApiError(401, error ?.message || "Invalid refresh Token");
+    throw new ApiError(401, error?.message || "Invalid refresh Token");
   }
 });
 
 const changeCurrentPassword = asyncHandler(async (req, res) => {
   const { oldPassword, newPassword } = req.body;
 
-  const user = await User.findById(req.user ?._id);
+  const user = await User.findById(req.user?._id);
   const isPasswordCorrect = await user.isPasswordCorrect(oldPassword);
 
   if (!isPasswordCorrect) {
@@ -265,7 +378,7 @@ const getCurrentUser = asyncHandler(async (req, res) => {
 });
 
 const updateUserAvatar = asyncHandler(async (req, res) => {
-  const avatarLocalPath = req.file ?.path;
+  const avatarLocalPath = req.file?.path;
 
   if (!avatarLocalPath) {
     throw new ApiError(400, "Avata file Path Missing");
@@ -278,7 +391,7 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
   }
 
   const user = await User.findByIdAndUpdate(
-    req.user ?._id,
+    req.user?._id,
     {
       $set: {
         avatar: avatar.url,
@@ -296,21 +409,36 @@ const updateUserAvatar = asyncHandler(async (req, res) => {
 
 const getUserFormStatus = asyncHandler(async (req, res) => {
   const idNumber = req.query.idNumber;
-  const userFormStatus = await User.findOne({ idNumber: idNumber, isDeleted: false }).select({ idNumber: 1, isUserInfoSaved: 1, _id: 0 });
+  const userFormStatus = await User.findOne({
+    idNumber: idNumber,
+    isDeleted: false,
+  }).select({ idNumber: 1, isUserInfoSaved: 1, _id: 0 });
   return res
     .status(200)
-    .json(new ApiResponse(200, userFormStatus, "User form status sent successfully"));
+    .json(
+      new ApiResponse(200, userFormStatus, "User form status sent successfully")
+    );
 });
 
 const getUserInfo = asyncHandler(async (req, res) => {
   const idNumber = req.query.idNumber;
-  const userInfoData = await User.findOne({ idNumber: idNumber, isDeleted: false })
-    .select({ firstName: 1, lastName: 1, email: 1, phone: 1, idNumber: 1, _id: 0 });
+  const userInfoData = await User.findOne({
+    idNumber: idNumber,
+    isDeleted: false,
+  }).select({
+    firstName: 1,
+    lastName: 1,
+    email: 1,
+    phone: 1,
+    idNumber: 1,
+    _id: 0,
+  });
   return res
     .status(200)
-    .json(new ApiResponse(200, userInfoData, "User form status sent successfully"));
+    .json(
+      new ApiResponse(200, userInfoData, "User form status sent successfully")
+    );
 });
-
 
 export {
   registerUser,
@@ -322,4 +450,6 @@ export {
   updateUserAvatar,
   getUserFormStatus,
   getUserInfo,
+  professionalInfo,
+  IndustryInfo,
 };

@@ -6,6 +6,8 @@ import {
   registerUser,
   getUserFormStatus,
   getUserInfo,
+  professionalInfo,
+  IndustryInfo
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
 import { verifyJWT } from "../middlewares/auth.middleware.js";
@@ -28,6 +30,9 @@ router.route("/register").post(
 );
 
 router.route("/login").post(upload.none(), loginUser);
+
+router.route("/Professional_Info").post(upload.none(), professionalInfo );
+router.route("/Industrial_Info").post(upload.none(), IndustryInfo );
 
 // Secured Routes
 router.route("/logout").post(verifyJWT, logOutUser);
