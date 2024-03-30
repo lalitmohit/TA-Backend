@@ -102,6 +102,7 @@ const userInfo = new Schema(
     collegeId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
+      // required: true
     },
     isDeleted: {
       type: Boolean,

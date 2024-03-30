@@ -121,108 +121,6 @@ const registerUser = asyncHandler(async (req, res) => {
   }
 });
 
-const professionalInfo = asyncHandler(async (req, res) => {
-  // LOGIC
-  // 1. Getting User Details from Frontend
-  // 2. Validation - Not Empty / ........
-  // 6. Create user object - create entry in DB
-  // 8. check for user creation
-  // 9. return user response
-  console.log(req.body);
-  try {
-    const { idNumber, designation, department, experience, profileSummary } =
-      req.body;
-
-    const userProfessionalInfo = await UserInfo.create({
-      idNumber: idNumber,
-      designation: designation,
-      department: department,
-      experience: experience,
-      profileSummary: profileSummary,
-    });
-
-    if (!userProfessionalInfo) {
-      return res
-        .status(400)
-        .send(
-          new ApiFailureResponse(
-            400,
-            "User Professional Info not saved succesfully, try again after sometimes"
-          )
-        );
-    }
-
-    return res.status(201).json(
-      new ApiResponse(
-        200,
-        {
-          user: userProfessionalInfo,
-        },
-        "User Professional Info Saved Successfully"
-      )
-    );
-  } catch (error) {
-    return res.send(new ApiError(500, "Internal Server Error"));
-  }
-});
-
-const IndustryInfo = asyncHandler(async (req, res) => {
-  // LOGIC
-  // 1. Getting User Details from Frontend
-  // 2. Validation - Not Empty / ........
-  // 6. Create user object - create entry in DB
-  // 8. check for user creation
-  // 9. return user response
-  try {
-    const {
-      idNumber,
-      areaOfSpecialisation,
-      primaryProgrammingSkills,
-      secondaryProgrammingSkills,
-      primarySkills,
-      secondarySkills,
-      softwareTools,
-      hardwareTools,
-      publications,
-      patents,
-    } = req.body;
-
-    console.log(req.body);
-    
-    const user = await UserInfo.findOne({ idNumber: idNumber });
-    const userInf = await User.findOne({ idNumber: idNumber });
-
-    userInf.isUserInfoSaved = true;
-
-    user.areaOfSpecilisation = areaOfSpecialisation;
-    user.primaryProgrammingSkills = primaryProgrammingSkills;
-    user.secondaryProgrammingSkills = secondaryProgrammingSkills;
-    user.primarySkills = primarySkills;
-    user.secondarySkills = secondarySkills;
-    user.softwareTools = softwareTools;
-    user.hardwareTools = hardwareTools;
-    user.publications = publications;
-    user.patents = patents;
-
-    await user.save({ validateBeforeSave: false });
-    await userInf.save({ validateBeforeSave: false });
-
-    return res
-      .status(201)
-      .json(
-        new ApiResponse(
-          200,
-          { user: user ,
-            userInf: userInf},
-          "User Industrial Info Saved Successfully"
-        )
-      );
-  } catch (error) {
-    console.error("Error in IndustryInfo:", error);
-    return res.send(new ApiError(500, "Internal Server Error"));
-  }
-});
-
 const loginUser = asyncHandler(async (req, res) => {
   // 1. req body -> data
   // 2. username or email
@@ -310,6 +208,107 @@ const logOutUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "User Logged Out Successfully"));
 });
 
+const professionalInfo = asyncHandler(async (req, res) => {
+  // LOGIC
+  // 1. Getting User Details from Frontend
+  // 2. Validation - Not Empty / ........
+  // 6. Create user object - create entry in DB
+  // 8. check for user creation
+  // 9. return user response
+  console.log(req.body);
+  try {
+    const { idNumber, designation, department, experience, profileSummary } =
+      req.body;
+
+    const userProfessionalInfo = await UserInfo.create({
+      idNumber: idNumber,
+      designation: designation,
+      department: department,
+      experience: experience,
+      profileSummary: profileSummary,
+    });
+
+    if (!userProfessionalInfo) {
+      return res
+        .status(400)
+        .send(
+          new ApiFailureResponse(
+            400,
+            "User Professional Info not saved succesfully, try again after sometimes"
+          )
+        );
+    }
+
+    return res.status(201).json(
+      new ApiResponse(
+        200,
+        {
+          user: userProfessionalInfo,
+        },
+        "User Professional Info Saved Successfully"
+      )
+    );
+  } catch (error) {
+    return res.send(new ApiError(500, "Internal Server Error"));
+  }
+});
+
+const IndustryInfo = asyncHandler(async (req, res) => {
+  // LOGIC
+  // 1. Getting User Details from Frontend
+  // 2. Validation - Not Empty / ........
+  // 6. Create user object - create entry in DB
+  // 8. check for user creation
+  // 9. return user response
+  try {
+    const {
+      idNumber,
+      areaOfSpecialisation,
+      primaryProgrammingSkills,
+      secondaryProgrammingSkills,
+      primarySkills,
+      secondarySkills,
+      softwareTools,
+      hardwareTools,
+      publications,
+      patents,
+    } = req.body;
+
+    console.log(req.body);
+
+    const user = await UserInfo.findOne({ idNumber: idNumber });
+    const userInf = await User.findOne({ idNumber: idNumber });
+
+    userInf.isUserInfoSaved = true;
+
+    user.areaOfSpecilisation = areaOfSpecialisation;
+    user.primaryProgrammingSkills = primaryProgrammingSkills;
+    user.secondaryProgrammingSkills = secondaryProgrammingSkills;
+    user.primarySkills = primarySkills;
+    user.secondarySkills = secondarySkills;
+    user.softwareTools = softwareTools;
+    user.hardwareTools = hardwareTools;
+    user.publications = publications;
+    user.patents = patents;
+
+    await user.save({ validateBeforeSave: false });
+    await userInf.save({ validateBeforeSave: false });
+
+    return res
+      .status(201)
+      .json(
+        new ApiResponse(
+          200,
+          { user: user, userInf: userInf },
+          "User Industrial Info Saved Successfully"
+        )
+      );
+  } catch (error) {
+    console.error("Error in IndustryInfo:", error);
+    return res.send(new ApiError(500, "Internal Server Error"));
+  }
+});
+
 const refreshAccessToken = asyncHandler(async (req, res) => {
   const incomingRefreshToken =
     req.cookies.refreshToken || req.body.refreshToken;
@@ -376,12 +375,6 @@ const changeCurrentPassword = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "Password changed Successfully"));
 });
 
-const getCurrentUser = asyncHandler(async (req, res) => {
-  return res
-    .status(200)
-    .json(new ApiResponse(200, req.user, "current user fetched"));
-});
-
 const updateUserAvatar = asyncHandler(async (req, res) => {
   const avatarLocalPath = req.file?.path;
 
@@ -445,16 +438,68 @@ const getUserInfo = asyncHandler(async (req, res) => {
     );
 });
 
+const getUserInfoDetails = asyncHandler(async (req, res) => {
+  const idNumber = req.query.idNumber;
+
+  let userInfo = await UserInfo.findOne({ idNumber });
+
+  if (!userInfo) {
+    userInfo = await UserInfo.create({ idNumber });
+  }
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        userInfo,
+      },
+      "User info fetched successfully"
+    )
+  );
+});
+
+const updateUserInfoDetails = asyncHandler(async (req, res) => {
+  const idNumber = req.query.idNumber;
+
+  let userInfo = await UserInfo.findOne({ idNumber });
+
+  if (!userInfo) {
+    return res
+      .status(404)
+      .json(new ApiFailureResponse(404, "User info not found"));
+  }
+
+  const { designation, department, experience, profileSummary } = req.body;
+
+  userInfo.designation = designation;
+  userInfo.department = department;
+  userInfo.experience = experience;
+  userInfo.profileSummary = profileSummary;
+
+  await userInfo.save({ validateBeforeSave: false });
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        userInfo,
+      },
+      "User info updated successfully"
+    )
+  );
+});
+
 export {
   registerUser,
   loginUser,
   logOutUser,
   refreshAccessToken,
   changeCurrentPassword,
-  getCurrentUser,
   updateUserAvatar,
   getUserFormStatus,
   getUserInfo,
   professionalInfo,
   IndustryInfo,
+  getUserInfoDetails,
+  updateUserInfoDetails
 };
