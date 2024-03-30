@@ -28,32 +28,36 @@ const generateAccessAndRefreshTokens = async (userId) => {
 
 const registerUser = asyncHandler(async (req, res) => {
   try {
-    // LOGIC
     // 1. Getting User Details from Frontend
-    // 2. Validation - Not Empty / ........
-    // 3. Checking if User Exists ? from username, email
-    // 4. Checking for images, checking for avatar
-    // 5. upload them to cloudinary, avatar
-    // 6. Create user object - create entry in DB
+    const { firstName, lastName, idNumber, email, password, phone } = req.body;
     // 7. Remove password and refresh token field from response
     // 8. check for user creation
     // 9. return user response
-    console.log(req.body);
-    const { firstName, lastName, idNumber, email, password, phone } = req.body;
-    console.log("password", password);
 
+    // 2. Validations
     if (
       [firstName, lastName, idNumber, email, password, phone].some(
         (field) => field?.trim() === ""
       )
     ) {
-      throw new ApiError(400, "All Fields are Compulsory");
+      return res
+        .status(409)
+        .send(new ApiFailureResponse(400, "All Fields are Compulsory"));
     }
 
-    if (phone.length > 10) {
-      throw new ApiError(400, "Enter Valid Phone Number");
+    if (phone.length !== 10) {
+      return res
+        .status(400)
+        .send(new ApiFailureResponse(400, "Phone Length is not 10"));
     }
 
+    if (idNumber.length !== 8) {
+      return res
+        .status(400)
+        .send(new ApiFailureResponse(400, "IdNumber length is not 8"));
+    }
+
+    // 3. Checking if User Exists ? from username, email
     const existedUser = await User.findOne({
       $or: [{ email }, { idNumber }, { phone }],
     });
@@ -77,6 +81,9 @@ const registerUser = asyncHandler(async (req, res) => {
     // }
 
     // avatar: avatar.url,
+
+    // 4. Create user object - create entry in DB
+
     const registerUser = await User.create({
       firstName: firstName.toLowerCase(),
       lastName: lastName.toLowerCase(),
@@ -106,14 +113,13 @@ const registerUser = asyncHandler(async (req, res) => {
       "http://localhost:8000/api/v1/users/login",
       data
     );
-    console.log(resp);
     return res.status(201).json(
       new ApiResponse(
         200,
         {
           user: registerUser,
         },
-        "User Registered Successfully"
+        "User Registered & Logined Successfully"
       )
     );
   } catch (error) {
@@ -128,11 +134,14 @@ const loginUser = asyncHandler(async (req, res) => {
   // 4. password check
   // 5. access an refresh token
   // 6. send secure cookies
-  console.log(req.body);
   const { idNumber, password } = req.body;
 
-  if (!idNumber) {
-    throw new ApiError(400, "idNumber is required");
+  if (!idNumber || idNumber.length !== 8) {
+    return res
+      .status(400)
+      .send(
+        new ApiFailureResponse(400, "IdNumber is required and of length 8")
+      );
   }
 
   const user = await User.findOne({
@@ -150,10 +159,6 @@ const loginUser = asyncHandler(async (req, res) => {
       .status(401)
       .send(new ApiFailureResponse(401, "Invalid Credentials"));
   }
-
-  // if (!isPasswordValid) {
-  //   throw new ApiError(401, "Invalid User Credentials");
-  // }
 
   const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
     user._id
@@ -206,107 +211,6 @@ const logOutUser = asyncHandler(async (req, res) => {
     .clearCookie("accessToken", options)
     .clearCookie("refreshToken", options)
     .json(new ApiResponse(200, {}, "User Logged Out Successfully"));
-});
-
-const professionalInfo = asyncHandler(async (req, res) => {
-  // LOGIC
-  // 1. Getting User Details from Frontend
-  // 2. Validation - Not Empty / ........
-  // 6. Create user object - create entry in DB
-  // 8. check for user creation
-  // 9. return user response
-  console.log(req.body);
-  try {
-    const { idNumber, designation, department, experience, profileSummary } =
-      req.body;
-
-    const userProfessionalInfo = await UserInfo.create({
-      idNumber: idNumber,
-      designation: designation,
-      department: department,
-      experience: experience,
-      profileSummary: profileSummary,
-    });
-
-    if (!userProfessionalInfo) {
-      return res
-        .status(400)
-        .send(
-          new ApiFailureResponse(
-            400,
-            "User Professional Info not saved succesfully, try again after sometimes"
-          )
-        );
-    }
-
-    return res.status(201).json(
-      new ApiResponse(
-        200,
-        {
-          user: userProfessionalInfo,
-        },
-        "User Professional Info Saved Successfully"
-      )
-    );
-  } catch (error) {
-    return res.send(new ApiError(500, "Internal Server Error"));
-  }
-});
-
-const IndustryInfo = asyncHandler(async (req, res) => {
-  // LOGIC
-  // 1. Getting User Details from Frontend
-  // 2. Validation - Not Empty / ........
-  // 6. Create user object - create entry in DB
-  // 8. check for user creation
-  // 9. return user response
-  try {
-    const {
-      idNumber,
-      areaOfSpecialisation,
-      primaryProgrammingSkills,
-      secondaryProgrammingSkills,
-      primarySkills,
-      secondarySkills,
-      softwareTools,
-      hardwareTools,
-      publications,
-      patents,
-    } = req.body;
-
-    console.log(req.body);
-
-    const user = await UserInfo.findOne({ idNumber: idNumber });
-    const userInf = await User.findOne({ idNumber: idNumber });
-
-    userInf.isUserInfoSaved = true;
-
-    user.areaOfSpecilisation = areaOfSpecialisation;
-    user.primaryProgrammingSkills = primaryProgrammingSkills;
-    user.secondaryProgrammingSkills = secondaryProgrammingSkills;
-    user.primarySkills = primarySkills;
-    user.secondarySkills = secondarySkills;
-    user.softwareTools = softwareTools;
-    user.hardwareTools = hardwareTools;
-    user.publications = publications;
-    user.patents = patents;
-
-    await user.save({ validateBeforeSave: false });
-    await userInf.save({ validateBeforeSave: false });
-
-    return res
-      .status(201)
-      .json(
-        new ApiResponse(
-          200,
-          { user: user, userInf: userInf },
-          "User Industrial Info Saved Successfully"
-        )
-      );
-  } catch (error) {
-    console.error("Error in IndustryInfo:", error);
-    return res.send(new ApiError(500, "Internal Server Error"));
-  }
 });
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
@@ -458,35 +362,110 @@ const getUserInfoDetails = asyncHandler(async (req, res) => {
   );
 });
 
-const updateUserInfoDetails = asyncHandler(async (req, res) => {
-  const idNumber = req.query.idNumber;
+const updateProfessionalInfo = asyncHandler(async (req, res) => {
+  try {
+    const { designation, department, experience, profileSummary,_id } = req.body;
+    const idNumber = req.query.idNumber;
 
-  let userInfo = await UserInfo.findOne({ idNumber });
+    // Finding or creating user info
+    let userInfo = await UserInfo.findOneAndUpdate(
+      { idNumber },
+      { $setOnInsert: { idNumber } },
+      { upsert: true, new: true }
+    );
 
-  if (!userInfo) {
-    return res
-      .status(404)
-      .json(new ApiFailureResponse(404, "User info not found"));
+    if (!userInfo) {
+      return res
+        .status(400)
+        .json(
+          new ApiFailureResponse(400, "User not found, Try Sometimes Later")
+        );
+    }
+
+    // Updating user info
+    userInfo.designation = designation;
+    userInfo.department = department;
+    userInfo.experience = experience;
+    userInfo.profileSummary = profileSummary;
+    userInfo.collegeId = _id;
+
+    await userInfo.save({ validateBeforeSave: false });
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        { userInfo }, // Object shorthand
+        "User Info updated successfully"
+      )
+    );
+  } catch (error) {
+    return res.status(500).json(new ApiError(500, "Internal Server Erorr"));
   }
+});
 
-  const { designation, department, experience, profileSummary } = req.body;
+const updateIndustryInfo = asyncHandler(async (req, res) => {
+  try {
+    // LOGIC
+    // 1. Getting User Details from Frontend
+    // 2. Validation - Not Empty / ........
+    // 6. Create user object - create entry in DB
+    // 8. check for user creation
+    // 9. return user response
+    const idNumber = req.query.idNumber;
+    const {
+      areaOfSpecialisation,
+      primaryProgrammingSkills,
+      secondaryProgrammingSkills,
+      primarySkills,
+      secondarySkills,
+      softwareTools,
+      hardwareTools,
+      publications,
+      patents,
+      _id,
+    } = req.body;
 
-  userInfo.designation = designation;
-  userInfo.department = department;
-  userInfo.experience = experience;
-  userInfo.profileSummary = profileSummary;
+    const userInfo = await UserInfo.findOne({
+      $or: [{ idNumber }],
+    });
 
-  await userInfo.save({ validateBeforeSave: false });
+    if (!userInfo) {
+      return res
+        .status(400)
+        .json(
+          new ApiFailureResponse(400, "User not found, Try Sometimes Later")
+        );
+    }
 
-  return res.status(200).json(
-    new ApiResponse(
-      200,
-      {
-        userInfo,
-      },
-      "User info updated successfully"
-    )
-  );
+    userInfo.areaOfSpecilisation = areaOfSpecialisation;
+    userInfo.primaryProgrammingSkills = primaryProgrammingSkills;
+    userInfo.secondaryProgrammingSkills = secondaryProgrammingSkills;
+    userInfo.primarySkills = primarySkills;
+    userInfo.secondarySkills = secondarySkills;
+    userInfo.softwareTools = softwareTools;
+    userInfo.hardwareTools = hardwareTools;
+    userInfo.publications = publications;
+    userInfo.patents = patents;
+    userInfo.collegeId = _id;
+
+    await userInfo.save({ validateBeforeSave: false });
+
+    const user = await User.findOne({ idNumber: idNumber });
+    user.isUserInfoSaved = true;
+    await user.save({ validateBeforeSave: false });
+
+    return res
+      .status(201)
+      .json(
+        new ApiResponse(
+          200,
+          { user: user, userInfo: userInfo },
+          "User Industrial Info Saved Successfully"
+        )
+      );
+  } catch (error) {
+    return res.send(new ApiError(500, "Internal Server Error"));
+  }
 });
 
 export {
@@ -498,8 +477,7 @@ export {
   updateUserAvatar,
   getUserFormStatus,
   getUserInfo,
-  professionalInfo,
-  IndustryInfo,
+  updateIndustryInfo,
   getUserInfoDetails,
-  updateUserInfoDetails
+  updateProfessionalInfo,
 };
