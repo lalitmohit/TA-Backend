@@ -4,7 +4,7 @@
   "description": "A TA Mangament System",
   "main": "index.js",
   "engines":{
-    "node": "16.x"
+    "node": "20.x"
   },
   "type": "module",
   "scripts": {
