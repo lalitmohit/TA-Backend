@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "A TA Mangament System",
   "main": "index.js",
+  "engines":{
+    "node": "16.x"
+  },
   "type": "module",
   "scripts": {
     "dev": "nodemon -r dotenv/config --experimental-json-modules src/index.js",
