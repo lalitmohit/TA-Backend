@@ -109,10 +109,11 @@ const registerUser = asyncHandler(async (req, res) => {
       password: password,
     };
 
-    const resp = await axios.post(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/users/login`,
-      data
-    );
+    // const resp = await axios.post(
+    //   `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/users/login`,
+    //   data
+    // );
+    console.log(process.env.NEXT_PUBLIC_BACKEND_URL);
     return res.status(201).json(
       new ApiResponse(
         200,
@@ -123,6 +124,7 @@ const registerUser = asyncHandler(async (req, res) => {
       )
     );
   } catch (error) {
+    console.log(process.env.NEXT_PUBLIC_BACKEND_URL);
     return res.status(500).json(new ApiError(500, "Internal Server Erorr"));
   }
 });
