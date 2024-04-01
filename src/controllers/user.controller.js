@@ -110,7 +110,7 @@ const registerUser = asyncHandler(async (req, res) => {
     };
 
     const resp = await axios.post(
-      "http://localhost:8000/api/v1/users/login",
+      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/users/login`,
       data
     );
     return res.status(201).json(
