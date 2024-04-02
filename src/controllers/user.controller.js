@@ -110,7 +110,7 @@ const registerUser = asyncHandler(async (req, res) => {
     };
 
     const resp = await axios.post(
-      `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/v1/users/login`,
+      `https://ta-backend-eta.vercel.app/api/v1/users/login`,
       data
     );
     console.log(process.env.NEXT_PUBLIC_BACKEND_URL);
