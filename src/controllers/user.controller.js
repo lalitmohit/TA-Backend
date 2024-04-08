@@ -7,6 +7,8 @@ import { ApiResponse, ApiFailureResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken";
 import mongoose from "mongoose";
 import axios from "axios";
+import { PythonShell } from 'python-shell';
+import path from 'path';
 
 const generateAccessAndRefreshTokens = async (userId) => {
   try {
@@ -470,6 +472,34 @@ const updateIndustryInfo = asyncHandler(async (req, res) => {
   }
 });
 
+const ml_output = asyncHandler(async (req, res) => {
+  // console.log("Hello")
+  const inputText = req.query.text;
+  const options = {
+    mode: 'text',
+    pythonOptions:['-u'],
+    args:[inputText]
+};
+
+  PythonShell.run('predict.py',options).then(result => {
+    const prediction = result
+    res.send(`Prediction: ${prediction}`)
+      // if (err) {
+      //     console.error(err);
+      //     console.log("Giving Error")
+      //     res.status(500).send('Error occurred');
+      // } else {
+      //     const prediction = result[0];
+      //     console.log("Giving Prediction");
+      //     console.log(result)
+      //     console.log(prediction)
+
+      //     res.send(`Prediction: ${prediction}`);
+      // }
+      // console.log(result)
+  });
+});
+
 export {
   registerUser,
   loginUser,
@@ -482,4 +512,5 @@ export {
   updateIndustryInfo,
   getUserInfoDetails,
   updateProfessionalInfo,
+  ml_output
 };

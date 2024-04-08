@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "A TA Mangament System",
   "main": "index.js",
-  "engines":{
+  "engines": {
     "node": "20.x"
   },
   "type": "module",
@@ -29,6 +29,7 @@
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.2.0",
     "multer": "^1.4.5-lts.1",
-    "next-auth": "^4.24.7"
+    "next-auth": "^4.24.7",
+    "python-shell": "^5.0.0"
   }
 }
