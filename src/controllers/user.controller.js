@@ -483,7 +483,8 @@ const ml_output = asyncHandler(async (req, res) => {
 
   PythonShell.run('predict.py',options).then(result => {
     const prediction = result
-    res.send(`Prediction: ${prediction}`)
+    // res.send(`Prediction: ${prediction}`)
+       res.send(prediction)
       // if (err) {
       //     console.error(err);
       //     console.log("Giving Error")
