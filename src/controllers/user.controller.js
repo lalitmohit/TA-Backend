@@ -337,6 +337,11 @@ const getUserInfo = asyncHandler(async (req, res) => {
     email: 1,
     phone: 1,
     idNumber: 1,
+    GitHub:1,
+    Ph2:1,
+    Linkedin:1,
+    Portfolio:1,
+    Other:1,
     _id: 0,
   });
   return res
