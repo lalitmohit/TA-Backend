@@ -9,6 +9,7 @@ import {
   updateIndustryInfo,
   getUserInfoDetails,
   updateProfessionalInfo,
+  updatePersonalInfo,
   ml_output
 } from "../controllers/user.controller.js";
 import { upload } from "../middlewares/multer.middleware.js";
@@ -48,5 +49,6 @@ router.route("/auth/google/callback").get(upload.none(), authGoogleCallback);
 
 router.route("/form/status").get(upload.none(), getUserFormStatus);
 router.route("/info").get(upload.none(), getUserInfo);
+router.route("/personal_info").put(upload.none(), updatePersonalInfo);
 router.route("/ml_output").get(upload.none(), ml_output);
 export default router;

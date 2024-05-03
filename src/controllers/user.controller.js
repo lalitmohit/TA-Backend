@@ -472,6 +472,60 @@ const updateIndustryInfo = asyncHandler(async (req, res) => {
   }
 });
 
+
+const updatePersonalInfo = asyncHandler(async (req, res) => {
+  try {
+    const idNumber = req.query.idNumber;
+    const {
+      Name,
+      Email,
+      Ph1,
+      Linkedin,
+      Ph2,
+      GitHub,
+      Portfolio,
+      Other
+    } = req.body;
+
+    const userInfo = await User.findOne({
+      $or: [{ idNumber }],
+    });
+
+    if (!userInfo) {
+      return res
+        .status(400)
+        .json(
+          new ApiFailureResponse(400, "User not found, Try Sometimes Later")
+        );
+    }
+
+    userInfo.firstName = Name;
+    // userInfo.lastName = lastName;
+    userInfo.email = Email;
+    userInfo.phone = Ph1;
+    userInfo.Linkedin = Linkedin;
+    userInfo.Ph2 = Ph2;
+    userInfo.GitHub = GitHub;
+    userInfo.Portfolio = Portfolio;
+    userInfo.Other = Other;
+    
+
+    await userInfo.save({ validateBeforeSave: false });
+
+    return res
+      .status(201)
+      .json(
+        new ApiResponse(
+          200,
+          { userInfo },
+          "User Personal Info Saved Successfully"
+        )
+      );
+  } catch (error) {
+    return res.send(new ApiError(500, "Internal Server Error"));
+  }
+});
+
 const ml_output = asyncHandler(async (req, res) => {
   // console.log("Hello")
   const inputText = req.query.text;
@@ -513,5 +567,6 @@ export {
   updateIndustryInfo,
   getUserInfoDetails,
   updateProfessionalInfo,
+  updatePersonalInfo,
   ml_output
 };

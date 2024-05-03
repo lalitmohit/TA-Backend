@@ -24,6 +24,22 @@ const userSchema = new Schema(
       trim: true,
       index: true,
     },
+
+    Linkedin:{
+      type: String,
+    },
+    GitHub:{
+      type: String,
+    },
+    Portfolio:{
+      type: String,
+    },
+    Other:{
+      type: String,
+    },
+    Ph2:{
+      type: String,
+    },
     password: {
       type: String,
       required: [true, "Password is Required"],
